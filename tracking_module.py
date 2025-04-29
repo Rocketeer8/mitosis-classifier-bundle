@@ -15,7 +15,7 @@ tracks_csv_name = "tracks.csv"
 spots_csv_name = "spots.csv"
 
 # Initialize Fiji / ImageJ once globally
-ij = imagej.init('Fiji.app', headless=True)
+ij = imagej.init('Fiji.app', headless=True)  # Start ImageJ instance (specifically, Fiji) for TrackMate plugin access.
 
 def export_to_csv(data, headers, file_path):
     df = pd.DataFrame(data, columns=headers)

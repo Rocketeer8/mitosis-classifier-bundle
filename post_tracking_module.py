@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import re
 from PIL import Image
 
-def detect_mitosis(group, overlap_threshold=3):
-    frame_groups = group.groupby('FRAME')
+def detect_mitosis(group, overlap_threshold=3):  # Detect mitosis events based on distance and overlap threshold.
+    frame_groups = group.groupby('FRAME')  # Group cell detections by frame number.
     last_single_cell_frame = None
     mitotic_pairs = []
 
@@ -18,8 +18,8 @@ def detect_mitosis(group, overlap_threshold=3):
         elif len(frame_group) == 2 and last_single_cell_frame is not None:
             cell1, cell2 = frame_group.iloc[0], frame_group.iloc[1]
             avg_diameter = 2 * np.sqrt((cell1['AREA'] + cell2['AREA']) / (2 * np.pi))
-            distance_threshold = 1.3 * avg_diameter
-            distance = np.sqrt((cell1['POSITION_X'] - cell2['POSITION_X'])**2 +
+            distance_threshold = 1.3 * avg_diameter  # Dynamic threshold: cells further apart than 1.3x average diameter may be division.
+            distance = np.sqrt((cell1['POSITION_X'] - cell2['POSITION_X'])**2 +  # Calculate Euclidean distance between two cells.
                                (cell1['POSITION_Y'] - cell2['POSITION_Y'])**2)
             if distance > distance_threshold:
                 mitotic_pairs.append((cell1['TRACK_ID'], cell2['TRACK_ID'], int(frame), distance_threshold))
@@ -56,7 +56,7 @@ def classify_cells(data):
         sustained_elongation = (group['ELLIPSE_ASPECTRATIO'].dropna() > 2.0).sum() >= 3
         sustained_rounding = (group['CIRCULARITY'] > 0.85).sum() >= 3
         significant_area_change = max_a > 1.5 * min_a
-        frames_exceeding_threshold = (group.groupby('FRAME').size() > cell_count_threshold).sum()
+        frames_exceeding_threshold = (group.groupby('FRAME').size() > cell_count_threshold).sum()  # Group cell detections by frame number.
 
         if frames_exceeding_threshold >= frame_occurrence_threshold:
             classification = 'NaN'
@@ -101,9 +101,9 @@ def classify_cells_pipeline(tracking_csv_dir, original_frames_dir, output_overla
     spots_df['ELLIPSE_ASPECTRATIO'] = pd.to_numeric(spots_df['ELLIPSE_ASPECTRATIO'], errors='coerce')
     merged_df = pd.merge(spots_df, tracks_df, on='TRACK_ID', how='left')
 
-    classification_results = classify_cells(merged_df)
+    classification_results = classify_cells(merged_df)  # Run classification of each track into mitosis outcome types.
     # Compute classification rates
-    classification_counts = classification_results['Classification'].value_counts()
+    classification_counts = classification_results['Classification'].value_counts()  # Count how many tracks are classified into each category (N, Y, T1F, T2F, etc).
     total_tracks = classification_results.shape[0]
     classification_rates = {f"Rate {label}": f"{(count / total_tracks) * 100:.2f}%" for label, count in classification_counts.items()}
 
@@ -123,7 +123,7 @@ def classify_cells_pipeline(tracking_csv_dir, original_frames_dir, output_overla
 
     annotated_data = pd.merge(merged_df, classification_results[['TRACK_ID', 'Classification']], on='TRACK_ID', how='left')
 
-    frame_files = sorted(
+    frame_files = sorted(  # Sort frame images based on numeric order extracted from filenames.
         [f for f in os.listdir(original_frames_dir) if f.endswith((".tif", ".tiff"))],
         key=extract_last_number
     )
@@ -142,7 +142,7 @@ def classify_cells_pipeline(tracking_csv_dir, original_frames_dir, output_overla
 
     for idx, file_name in enumerate(frame_files):
         frame = idx + 1
-        adjusted_frame = frame + frame_offset
+        adjusted_frame = frame + frame_offset  # Offset frame index if needed to align images with tracking data.
 
         frame_path = os.path.join(original_frames_dir, file_name)
         frame_tracks = annotated_data[annotated_data['FRAME'] == adjusted_frame]
@@ -162,7 +162,7 @@ def classify_cells_pipeline(tracking_csv_dir, original_frames_dir, output_overla
             for _, row in frame_tracks.iterrows():
                 if not pd.isna(row['TRACK_ID']) and not pd.isna(row['POSITION_X']) and not pd.isna(row['POSITION_Y']):
                     x, y = row['POSITION_X'], row['POSITION_Y']
-                    plt.text(x, y, f"{int(row['TRACK_ID'])}: {row['Classification']}",
+                    plt.text(x, y, f"{int(row['TRACK_ID'])}: {row['Classification']}",  # Draw classification and track ID labels on the frame images.
                             color=(1, 1, 1, 0.6), fontsize=4,
                             bbox=dict(facecolor='black', alpha=0.2, pad=0.2))
 
@@ -175,4 +175,3 @@ def classify_cells_pipeline(tracking_csv_dir, original_frames_dir, output_overla
             print(f"[✓] Overlay saved for {file_name}")
         else:
             print(f"[Overlay] Frame not found: {frame_path}")
-
