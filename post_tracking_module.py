@@ -27,16 +27,26 @@ def detect_mitosis(group, overlap_threshold=3):  # Detect mitosis events based o
     if not mitotic_pairs:
         return False
 
-    for track_id1, track_id2, start_frame, dynamic_threshold in mitotic_pairs:
-        frames_no_overlap = sum(
-            (lambda frame_data: (
-                np.sqrt((frame_data.iloc[0]['POSITION_X'] - frame_data.iloc[1]['POSITION_X'])**2 +
-                        (frame_data.iloc[0]['POSITION_Y'] - frame_data.iloc[1]['POSITION_Y'])**2) > dynamic_threshold
-            ) if len(frame_data) == 2 else False)
-            (group[group['FRAME'] == f])
-            for f in range(start_frame, start_frame + overlap_threshold + 1)
-        )
-        if frames_no_overlap >= overlap_threshold:
+    for track_id1, track_id2, start_frame, distance_threshold in mitotic_pairs:
+        
+        frames_with_clear_separation = 0 # Count how many subsequent frames the two cells remain far apart
+
+        for frame_num in range(start_frame, start_frame + overlap_threshold + 1):
+            frame_data = group[group['FRAME'] == frame_num]
+
+            if len(frame_data) == 2: # Check only if exactly two cells are detected in the frame
+                cell1, cell2 = frame_data.iloc[0], frame_data.iloc[1]
+
+                # Calculate Euclidean distance between the two cells
+                distance = np.sqrt(
+                    (cell1['POSITION_X'] - cell2['POSITION_X'])**2 + (cell1['POSITION_Y'] - cell2['POSITION_Y'])**2
+                )
+
+                if distance > distance_threshold:
+                    frames_with_clear_separation += 1
+
+        # Confirm mitosis only if the cells remained separated for the required number of frames
+        if frames_with_clear_separation >= overlap_threshold:
             return True
     return False
 

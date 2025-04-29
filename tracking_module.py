@@ -68,7 +68,7 @@ def run_trackmate(sequence_dir, output_dir):
     settings.trackerSettings.put("MAX_FRAME_GAP", {max_frame_gap} as java.lang.Integer);
     settings.trackerSettings.put("ALLOW_TRACK_SPLITTING", true);
     settings.trackerSettings.put("SPLITTING_MAX_DISTANCE", 20.0 as java.lang.Double);
-    settings.trackerSettings.put("ALLOW_TRACK_MERGING", true);
+    settings.trackerSettings.put("ALLOW_TRACK_MERGING", false);
     settings.trackerSettings.put("MERGING_MAX_DISTANCE", 20.0 as java.lang.Double);
     settings.trackerSettings.put("ALTERNATIVE_LINKING_COST_FACTOR", 1.05 as java.lang.Double);
     settings.trackerSettings.put("CUTOFF_PERCENTILE", 0.9 as java.lang.Double);
